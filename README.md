@@ -1,5 +1,7 @@
 # CSC 591-021 ASE Group-25 Project
 [![DOI](https://zenodo.org/badge/629184365.svg)](https://zenodo.org/badge/latestdoi/629184365)
+![GitHub](https://img.shields.io/github/license/AutoSE/Project)
+
 
 This repository contains the final project of CSC 591 021 Group 25.
 
