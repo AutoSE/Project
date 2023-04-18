@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: CSC 591-021 Project
+authors:
+- family-names: Mhatre 
+  given-names: Kaksha
+  email: kpmhatre@ncsu.edu
+- family-names: Phadtare
+  given-names: Janvi
+  email: jphadta@ncsu.edu
+- family-names: Ganesh
+  given-names: Saail
+  email: sganesh9@ncsu.edu
+- family-names: Pardeshi 
+  given-names: Sourabh
+  email: sjpardes@ncsu.edu
+identifiers:
+  - type: url
+    value: 'https://zenodo.org/badge/latestdoi/629184365'
+title: "CSC 591-021 Project"
+version: v1.1
+date-released: 2023-04-18
+url: "https://github.com/AutoSE/Project"
