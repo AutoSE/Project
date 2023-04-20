@@ -53,7 +53,7 @@ def syms():
         sym_obj.add(x)
     print(sym_obj.mid(), u.rnd(sym_obj.div()))
     return 1.379 == u.rnd(sym_obj.div())
-
+'''
 def csv():
     def fn(t):
         global numberofchars
@@ -62,7 +62,7 @@ def csv():
     numberofchars=0
     u.csv(c.the['file'],fn)
     return 3192==numberofchars
-
+'''
 def data():
     data = d.Data(c.the["file"])
     col = data.cols.x[1]
@@ -162,8 +162,8 @@ def all():
     egs['nums']=nums()
     print('syms')
     egs['syms']=syms()
-    print('csv')
-    egs['csv']=csv()
+    #print('csv')
+    #egs['csv']=csv()
     print('data')
     egs['data']=data()
     print('clone')

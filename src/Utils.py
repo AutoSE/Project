@@ -83,8 +83,9 @@ def kap(t, fun):
 def kapd(t, fun):
     u = {}
     for k,v in t.items():
-        v, k = fun(k,v)
-        u[k or len(u)] = v
+        if k is not None and v is not None:
+            v, k = fun(k,v)
+            u[k or len(u)] = v
     return u
 
 def any(t):

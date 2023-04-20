@@ -44,7 +44,7 @@ class Data:
             y=col.norm(row2.cells[col.at])
             s1=s1-math.exp(col.w*(x-y)/len(ys))
             s2=s2-math.exp(col.w*(y-x)/len(ys))
-            return s1/len(ys) < s2/len(ys)
+        return s1/len(ys) < s2/len(ys)
 
     def dist(self, row1, row2, cols=None):
         n,d = 0,0
@@ -136,7 +136,8 @@ class Data:
                 j=j+1
             return t if len(t0)==len(t) else merge(t) 
         def merges(attr, ranges):
-            return list(map(pretty,merge(sorted(ranges,key=itemgetter('lo'))))),attr
+            if ranges is not None:
+                return list(map(pretty,merge(sorted(ranges,key=itemgetter('lo'))))),attr
         return u.kapd(rule,merges)
 
 
@@ -184,7 +185,7 @@ class Data:
                 if len(bestr) + len(restr) > 0: 
                     return v({'best': len(bestr), 'rest':len(restr)}),rule
         for ranges in u.bins(self.cols.x,{'best':best.rows, 'rest':rest.rows}):
-            maxSizes[ranges[1]['txt']] = len(ranges)
+            maxSizes[ranges[0]['txt']] = len(ranges)
             print("")
             for range in ranges:
                 print(range['txt'], range['lo'], range['hi'])
@@ -194,6 +195,8 @@ class Data:
 
     def selects(self, rule, rows):
         def disjunction(ranges, row):
+            if ranges is None:
+                return False
             for range in ranges:
                 lo, hi, at = range['lo'], range['hi'], range['at']
                 x = row.cells[at]
