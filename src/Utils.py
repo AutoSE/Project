@@ -8,9 +8,10 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 import cli as w
+import num as q
 from sym import Sym
 Seed = 937162211
-
+from scipy.stats import kruskal, mannwhitneyu
 import random
 def settings(s):
     return dict(re.findall("\n[\s]+[-][\S]+[\s]+[-][-]([\S]+)[^\n]+= ([\S]+)",s))
@@ -271,10 +272,14 @@ def gaussian(mu, sd):
     return mu + sd * math.sqrt(-2*math.log(random.random()))*math.cos(2*math.pi*random.random())
 
 def cliffsDelta(ns1,ns2):
-    if len(ns1) > 128:
+    if len(ns1) > 256:
         ns1 = samples(ns1,128)
-    if len(ns2) > 128:
+    if len(ns2) > 256:
         ns2 = samples(ns2,128)
+    if len(ns1) > 10*len(ns2):
+        ns1 = many(ns1,10*len(ns2))
+    if len(ns2) > 10*len(ns1):
+        ns2 = many(ns2,10*len(ns1))
     n,gt,lt = 0,0,0
     for x in ns1:
         for y in ns2:
@@ -283,14 +288,14 @@ def cliffsDelta(ns1,ns2):
                 gt = gt + 1
             if x < y:
                 lt = lt + 1
-    return abs(lt - gt)/n <= float(w.the['cliffs'])
+    return abs(lt - gt)/n <= 0.4
 
 def delta(i,other):
     e,y,z = 1E-32, i, other
     return abs(y.mu-z.mu)/((e+y.sd**2/y.n+z.sd**2/z.n)**0.5)
 
 def bootstrap(y0,z0):
-    x,y,z,yhat,zhat = Num(), Num(), Num(),[],[]
+    x,y,z,yhat,zhat = q.Num(), q.Num(), q.Num(),[],[]
     for y1 in y0:
         x.add(y1)
         y.add(y1)
@@ -304,15 +309,10 @@ def bootstrap(y0,z0):
         zhat.append(z1-zmu+xmu)
     tobs = delta(y,z)
     n=0
-    for _ in range(1,w.the['bootstrap']+1):
-        ypass,zpass=Num(),Num()
-        for y in samples(yhat):
-            ypass.add(y)
-        for z in samples(yhat):
-            zpass.add(z)
-        if delta(ypass,zpass)>tobs:
-            n=n+1
-    return (n/float(w.the['bootstrap'])) >= float(w.the['conf'])
+    for _ in range(1,512+1):
+        if delta(q.Num(t=samples(yhat)), q.Num(t=samples(zhat))) > tobs:
+            n += 1
+    return (n/512) >= 0.9
     
 def scottKnot(rxs):
     def merges(i,j):
@@ -381,3 +381,100 @@ def tiles(rxs):
             x.append(w.the['Fmt'].format(i))
         rx['show'] = ''.join(u) + str(x)
     return rxs
+
+
+def run_stats(data, top_table):
+    print('MWU and KW significance level: ', the['significance_level']/100)
+    all =  top_table['all']
+    sway1 = top_table['sway1']
+    sway2 = top_table['sway2 (pca)']
+    sway3 = top_table['sway3 (agglo)']
+    sway4 = top_table['sway4 (kmeans)']
+    sways = ['sway1', 'sway2', 'sway3', 'sway4']
+    mwu_sways = []
+    kw_sways = []
+
+    taxes = {'samp tax1': [], 'samp tax2': [], 'samp tax3': [], 'samp tax4': []}
+
+    for col in data.cols.y:
+        sway_avgs = [sway1['avg'][col.txt], sway2['avg'][col.txt], sway3['avg'][col.txt], sway4['avg'][col.txt]]
+
+        for idx in range(len(xpln_avgs)):
+            taxes['samp tax' + str(idx + 1)].append(round(all['avg'][col.txt] - sway_avgs[idx], 2))
+
+        if col.w == -1:
+            best_avg = min(sway_avgs)
+        else:
+            best_avg = max(sway_avgs)
+        best_sway = sways[sway_avgs.index(best_avg)]
+
+        for best in sway1['data']:
+            sway1_col = [row.cells[col.at] for row in best.rows]
+        for best in sway2['data']:
+            sway2_col = [row.cells[col.at] for row in best.rows]
+        for best in sway3['data']:
+            sway3_col = [row.cells[col.at] for row in best.rows]
+        for best in sway4['data']:
+            sway4_col = [row.cells[col.at] for row in best.rows]
+
+        _, p_value_sways = kruskal(sway1_col, sway2_col, sway3_col, sway4_col)
+        kw_sway_p_values.append(p_value_sways/100)
+        # if p_value < the['kw_significance']:
+        #     top_table['kw_significant'].append('yes')
+        # else:
+        #     top_table['kw_significant'].append('no')
+        
+        groups = [sway1_col, sway2_col, sway3_col, sway4_col]
+        num_groups = len(groups)
+        p_values_mwu = np.zeros((num_groups, num_groups))
+        p_values_kruskal = np.zeros((num_groups, num_groups))
+
+        for i in range(num_groups):
+            for j in range(i+1, num_groups):
+                _, p = mannwhitneyu(groups[i], groups[j], alternative='two-sided')
+                p_values_mwu[i, j] = p
+                p_values_mwu[j, i] = p
+                _, p_value_kruskal = kruskal(sway1_col, sway2_col, sway3_col, sway4_col)
+                p_values_kruskal[i, j] = p_value_kruskal
+                p_values_kruskal[j, i] = p_value_kruskal
+
+        # print('Pairwise Mann-Whitney U tests')
+        # print(pd.DataFrame(p_values_mwu, index=sways, columns=sways))
+        # print()
+
+        # Apply Bonferroni correction for multiple comparisons
+        adjusted_p_values = multipletests(p_values_mwu.ravel(), method='fdr_bh')[1].reshape(p_values_mwu.shape)
+        post_hoc = pd.DataFrame(adjusted_p_values, index=sways, columns=sways)
+
+        # print("Pairwise Mann-Whitney U tests with Benjamini/Hochberg correction:")
+        # print(post_hoc)
+        # print()
+
+        krusal_df = pd.DataFrame(p_values_kruskal, index=sways, columns=sways)
+        # print("Pairwise Kruskal Wallis:")
+        # print(krusal_df)
+        # print()
+
+        mwu_sig = set(post_hoc.iloc[list(np.where(post_hoc >= the['significance_level'])[0])].index)
+        if len(mwu_sig) == 0:
+            mwu_sways.append([best_sway])
+        else:
+            mwu_sways.append(list(mwu_sig))
+
+        kw_sig = set(krusal_df.iloc[list(np.where(krusal_df >= the['significance_level'])[0])].index)
+        if len(kw_sig) == 0:
+            kw_sways.append([best_sway])
+        else:
+            kw_sways.append(list(kw_sig))
+    return mwu_sways, kw_sways, taxes, kw_sway_p_values
+
+def get_avgs_from_data_list(data_obj_list):
+    avgs = {}
+    # For each data_obj, get sum of mid/mode
+    for data_obj in data_obj_list:
+        for k,v in data_obj.stats().items():
+            avgs[k] = avgs.get(k,0) + v
+    # Convert sums to averages
+    for k,v in avgs.items():
+        avgs[k] = round(avgs[k]/the['n_iter'], 2)
+    return avgs

@@ -3,7 +3,7 @@ import Utils as u
 import cli as g
 import math
 class Num:
-    def __init__(self, at=0, txt=""):
+    def __init__(self, at=0, txt="", t=None):
         self.at, self.txt = at, txt 
         self.n, self.mu, self.m2 = 0,0,0
         self.mu=0
@@ -11,7 +11,10 @@ class Num:
         self.lo, self.hi = float("inf"), float("-inf")
         self.w = -1 if "-" in self.txt else 1 
         self.has = {}
-
+        self.sd = 0
+        if t:
+            for n in t:
+                self.add(n)
     def add(self,n):
         if n != '?':
             n=float(n)
@@ -23,7 +26,7 @@ class Num:
             self.m2 = self.m2 + d*(n-self.mu)
             self.lo = min(n, self.lo)
             self.hi = max(n, self.hi)
-
+            self.sd = 0 if self.n<2 else (self.m2/(self.n - 1))**.5
     def mid(self):
         return self.mu
 
@@ -48,3 +51,6 @@ class Num:
         if n2 == "?":
             n2 = 1 if n1 < 0.5 else 0
         return abs(n1 - n2)
+    
+    def vals(self):
+        return list(dict(sorted(self.has.items(), key=lambda x: x[1])).values())

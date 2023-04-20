@@ -118,7 +118,7 @@ class Data:
                 left.append(rows[key])
             else:
                 right.append(rows[key])
-        return left, right, random.choices(left, k=10), random.choices(right, k=10), 1
+        return left, right, random.choices(left, k=12), random.choices(right, k=12), 1
     
 
     def spectral_clustering(self, rows=None):
