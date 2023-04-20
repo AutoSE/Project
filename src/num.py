@@ -10,7 +10,8 @@ class Num:
         self.n=0
         self.lo, self.hi = float("inf"), float("-inf")
         self.w = -1 if "-" in self.txt else 1 
-        self.has = {}
+        self.has = {},
+        self.sd = 0
 
     def add(self,n):
         if n != '?':
@@ -23,18 +24,22 @@ class Num:
             self.m2 = self.m2 + d*(n-self.mu)
             self.lo = min(n, self.lo)
             self.hi = max(n, self.hi)
+            self.sd = 0 if self.n<2 else (self.m2/(self.n - 1))**.5
 
     def mid(self):
-        return self.mu
+        return per(self.vals(), .5)
 
     def div(self):
-        return 0 if self.m2<0 or self.n<2 else (self.m2/(self.n-1))**0.5
+        return (per(self.vals(), .9) - per(self.vals(), .1)) / 2.58
 
     def rnd(self,x,n):
         return x if x=='?' else u.rnd(x,n)
 
     def norm(self, n):
         return n if n == "?" else (n-self.lo)/(self.hi - self.lo + 10**-32)
+    
+    def vals(self):
+        return list(dict(sorted(self.has.items(), key=lambda x: x[1])).values())
 
     def dist(self, n1, n2):
         if n1 == "?" and n2 == "?":
