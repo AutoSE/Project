@@ -34,7 +34,7 @@ class Data:
         _ = list(map(data.add, init))
         return data
 
-    def stats(self, what, cols, nPlaces):
+    def stats(self, what='mid', cols=None, nPlaces=2):
         def fun(_,col):
             if what=='mid':
                 val=col.mid()
@@ -110,7 +110,7 @@ class Data:
         if not rows:
             rows = self.rows
         row_set = np.array([r.cells for r in rows])
-        agg_clust = AgglomerativeClustering(n_clusters=2,metric='euclidean',linkage='ward')
+        agg_clust = AgglomerativeClustering(n_clusters=2,linkage='ward')  #,metric='euclidean'
         agg_clust.fit(row_set)
 
         for key, value in enumerate(agg_clust.labels_):
@@ -135,6 +135,7 @@ class Data:
             if value == 0:
                 left.append(rows[key])
             else:
+                print('right')
                 right.append(rows[key])
         return left, right, random.choices(left, k=10), random.choices(right, k=10), 1
     

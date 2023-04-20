@@ -182,7 +182,7 @@ def table():
     top_table = {'all': {'data' : [], 'evals' : 0},
              'sway': {'data' : [], 'evals' : 0},
              'sway1': {'data' : [], 'evals' : 0},
-             'sway2': {'data' : [], 'evals' : 0},
+             #'sway2': {'data' : [], 'evals' : 0},
              'top': {'data' : [], 'evals' : 0}}
 
     bottom_table = [[['all', 'all'],None],
@@ -196,23 +196,26 @@ def table():
         data = d.Data(c.the['file'])
         best, rest, evals = data.sway()
         rule, most = data.xpln(best, rest)
+        print('------------------------------------------------------')
+        print(best,rest,evals,rule,most)
+        print('------------------------------------------------------')
         data = d.Data(c.the['file'])
         data2 = u.preprocess_data(c.the['file'], d.Data)
         best1, rest1, evals1 = data2.sway1()
-        best2, rest2, evals2 = data2.sway2()
+        #best2, rest2, evals2 = data2.sway2()
         if rule!=-1:
             betters, _ = data.betters(len(best.rows))
             top_table['top']['data'].append(d.Data(c.the['file']))
             top_table['all']['data'].append(data)
             top_table['sway']['data'].append(best)
             top_table['sway1']['data'].append(best1)
-            top_table['sway2']['data'].append(best2)
+            #top_table['sway2']['data'].append(best2)
             top_table['all']['evals'] += 0
             top_table['sway']['evals'] += evals
             top_table['sway1']['evals'] += evals1
-            top_table['sway2']['evals'] += evals2
+            #top_table['sway2']['evals'] += evals2
             top_table['top']['evals'] += len(data.rows)
-            for i in range(len(bottom_table)):
+            '''for i in range(len(bottom_table)):
                 [base, diff], result = bottom_table[i]
                 if result == None:
                     bottom_table[i][1] = ['=' for _ in range(len(data.cols.y))]
@@ -221,7 +224,7 @@ def table():
                         y0, z0 = top_table[base]['data'][count].cols.y[k],top_table[diff]['data'][count].cols.y[k]
                         is_equal = u.bootstrap(y0.vals(), z0.vals()) and u.cliffsDelta(y0.vals(), z0.vals())
                         if not is_equal:
-                            bottom_table[i][1][k] = '≠'
+                            bottom_table[i][1][k] = '≠'''
             count+=1
 
     headers = [y.txt for y in data.cols.y]
@@ -229,19 +232,25 @@ def table():
 
     top_table['sway'] = top_table.pop('sway')
     top_table['sway1'] = top_table.pop('sway1')
-    top_table['sway2'] = top_table.pop('sway2')
+    #top_table['sway2'] = top_table.pop('sway2')
     top_table['top'] = top_table.pop('top')
+    #print(top_table)   #added this print,delete later
+
+
+
     for k,v in top_table.items():
+        print(k,v)
         v['avg'] = u.get_avgs_from_data_list(v['data'])
-        stats = [k] + [v['avg'][y] for y in headers]
-        stats += [int(v['evals']/the['n_iter'])]
-        table.append(stats)
-    mwu_sways, kw_sways, taxes, kw_sway_p_values = u.run_stats(data2, top_table)
+        print(v['avg'])
+        stat = [k] + [v['avg'][y] for y in headers]
+        stat += [int(v['evals']/20)]
+        table.append(stat)
+    '''mwu_sways, kw_sways, taxes, kw_sway_p_values = u.run_stats(data2, top_table)
     for k, v in taxes.items():
         table.append([k] + v)
         table.append(['KW Sway p-vals'] + kw_sway_p_values)
         table.append(['Mann-Whitney U Sways'] + mwu_sways)
-        table.append(['Kruskal-Wallis Sways'] + kw_sways)
+        table.append(['Kruskal-Wallis Sways'] + kw_sways)'''
     print(tabulate(table, headers=headers+["n_evals avg"],numalign="right"))
     print()
 
@@ -278,6 +287,6 @@ def all():
     egs['bins']=bins()
     print('xpln')
     egs['xpln']=xpln()
-    #print('table')
-    #egs['table']=table()
+    print('table')
+    egs['table']=table()
 

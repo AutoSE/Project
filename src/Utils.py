@@ -476,5 +476,5 @@ def get_avgs_from_data_list(data_obj_list):
             avgs[k] = avgs.get(k,0) + v
     # Convert sums to averages
     for k,v in avgs.items():
-        avgs[k] = round(avgs[k]/the['n_iter'], 2)
+        avgs[k] = round(avgs[k]/20, 2)
     return avgs
