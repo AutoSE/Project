@@ -4,7 +4,7 @@ import math
 import copy
 import json
 from pathlib import Path
-import cli as c
+import cli as w
 from sym import Sym
 Seed = 937162211
 
@@ -167,7 +167,7 @@ def cliffsDelta(ns1,ns2):
                 gt = gt + 1
             if x < y:
                 lt = lt + 1
-    return abs(lt - gt)/n > float(c.the['cliffs'])
+    return abs(lt - gt)/n > float(w.the['cliffs'])
 
 def showTree(tree, what, cols, nPlaces, lvl = 0):
   if tree:
@@ -199,7 +199,7 @@ def bins(cols,rowss):
 def bin(col,x):
     if x=="?" or isinstance(col, Sym):
         return x
-    tmp = (col.hi - col.lo)/(c.the['bins'] - 1)
+    tmp = (col.hi - col.lo)/(w.the['bins'] - 1)
     return  1 if col.hi == col.lo else math.floor(x/tmp + .5)*tmp
 
 def mergeAny(ranges0):
@@ -255,7 +255,7 @@ def cliffsDelta(ns1,ns2):
                 gt = gt + 1
             if x < y:
                 lt = lt + 1
-    return abs(lt - gt)/n <= float(c.the['cliffs'])
+    return abs(lt - gt)/n <= float(w.the['cliffs'])
 
 def delta(i,other):
     e,y,z = 1E-32, i, other
@@ -276,7 +276,7 @@ def bootstrap(y0,z0):
         zhat.append(z1-zmu+xmu)
     tobs = delta(y,z)
     n=0
-    for _ in range(1,c.the['bootstrap']+1):
+    for _ in range(1,w.the['bootstrap']+1):
         ypass,zpass=Num(),Num()
         for y in samples(yhat):
             ypass.add(y)
@@ -284,7 +284,7 @@ def bootstrap(y0,z0):
             zpass.add(z)
         if delta(ypass,zpass)>tobs:
             n=n+1
-    return (n/float(c.the['bootstrap'])) >= float(c.the['conf'])
+    return (n/float(w.the['bootstrap'])) >= float(w.the['conf'])
     
 def scottKnot(rxs):
     def merges(i,j):
