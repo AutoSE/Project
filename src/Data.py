@@ -29,16 +29,13 @@ class Data:
         return data
 
     def stats(self, what, cols, nPlaces):
-        def fun(k,col):
+        def fun(_,col):
             if what=='mid':
                 val=col.mid()
             else:
                 val=col.div()
             return col.rnd(val, nPlaces),col.txt
-        if cols:
-            return u.kap(cols, fun)
-        else:
-            return u.kap(self.cols.y, fun)
+        return u.kap(cols or self.cols.y, fun)
 
     def better(self, row1, row2):
         s1,s2,ys=0,0,self.cols.y
@@ -51,35 +48,38 @@ class Data:
 
     def dist(self, row1, row2, cols=None):
         n,d = 0,0
-        for col in (cols or self.cols.x):
+        for col in cols or self.cols.x:
             n = n + 1
-            d = d + col.dist(row1.cells[col.at], row2.cells[col.at])**g.the["p"]
-        return (d/n)**(1/g.the["p"])
+            d = d + col.dist(row1.cells[col.at], row2.cells[col.at])**int(g.the["p"])
+        return (d/n)**(1/int(g.the["p"]))
 
     def around(self, row1, rows=None, cols=None):
         def function(row2):
             return {'row' : row2, 'dist' : self.dist(row1,row2,cols)} 
-        return sorted(list(map(function, rows or self.rows)), key= lambda k: k['dist'])
+        return sorted(list(map(function, rows or self.rows)), key= itemgetter('dist'))
 
     def half(self, rows=None, cols=None, above=None):
-        def dist(row1, row2):
+        def gp(row1, row2):
             return self.dist(row1, row2, cols)
-        rows=rows or self.rows
-        some=u.many(rows, g.the['Sample'])
-        A=above or u.any(some)
-        B=self.around(A, some)[int((float(g.the['Far'])*len(rows)))]['row']
-        c=dist(A,B)
-        left,right=[],[]
-        
         def project(row):
-            return {'row': row, 'dist': u.cosine(dist(row, A), dist(row,B), c)}
+            return {'row': row, 'dist': u.cosine(gp(row, A), gp(row,B), c)}
+        rows=rows or self.rows
+        some=u.many(rows, int(g.the['Halves']))
+        A = above if above else u.any(some)
+        def function(r):
+            return {'row' : r, 'dist' : gp(r, A)}
+        tmp = sorted(list(map(function, some)), key=itemgetter('dist'))
+        far = tmp[int(float(g.the['Far']) * len(rows))]
+        B=far['row']
+        c=far['dist']
+        left,right=[],[]
         for n, tmp in enumerate(sorted(list(map(project, rows)), key=itemgetter('dist'))):
-            if n<=len(rows)//2:
+            if n<len(rows)//2:
                 left.append(tmp['row'])
-                mid=tmp['row']
             else:
                 right.append(tmp['row'])
-        return left, right, A,B,mid,c
+        evals=1 if g.the['Reuse']=='true' and above else 2
+        return left, right, A,B,c,evals
 
     def cluster(self, rows = None, min=None, cols=None, above=None):
         rows = rows or self.rows
@@ -123,7 +123,7 @@ class Data:
             return range['lo'] if range['lo']==range['hi'] else [range['lo'], range['hi']]
         def merge(t0):
             t,j=[],1
-            while j<len(t0):
+            while j<=len(t0):
                 left=t0[j-1]
                 if j<len(t0):
                     right=t0[j]
@@ -140,22 +140,25 @@ class Data:
         return u.kapd(rule,merges)
 
 
-    def firstN(self, sorted_ranges, scoreFun):
+    def firstN(self, sortedRanges, scoreFun):
         print()
-        for r in sorted_ranges:
-            print(r['range']['txt'], r['range']['lo'], r['range']['hi'], u.rnd(r['val']), dict(r['range']['y'].has))
-        first = sorted_ranges[0]['val']
+        def function(r):
+            print(r['range']['txt'],r['range']['lo'],r['range']['hi'],u.rnd(r['val']),r['range']['y'].has)
+        _ = list(map(function, sortedRanges))
+        print()
+        first = sortedRanges[0]['val']
         def useful(range):
-            if range['val'] > 0.05 and range['val'] > first / 10:
+            if range['val']>.05 and range['val']> first/10:
                 return range
-        sorted_ranges = [s for s in sorted_ranges if useful(s)]
-        most: int = -1
-        out: int = -1
-        for n in range(len(sorted_ranges)):
-            tmp, rule = scoreFun([r['range'] for r in sorted_ranges[:n+1]])
-            if tmp is not None and tmp > most:
-                out, most = rule, tmp
-        return out, most
+        sortedRanges = [x for x in sortedRanges if useful(x)]
+        most,out = -1, -1
+        for n in range(1,len(sortedRanges)+1):
+            slice = sortedRanges[0:n]
+            slice_range = [x['range'] for x in slice]
+            tmp,rule = scoreFun(slice_range)
+            if tmp and tmp > most:
+                out,most = rule,tmp
+        return out,most
 
     def betters(self,n):
         tmp=sorted(self.rows, key=lambda row: self.better(row, self.rows[self.rows.index(row)-1]))

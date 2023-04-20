@@ -6,11 +6,9 @@ import json
 from pathlib import Path
 import cli as c
 from sym import Sym
-from num import Num
-import random
-
 Seed = 937162211
 
+import random
 def settings(s):
     return dict(re.findall("\n[\s]+[-][\S]+[\s]+[-][-]([\S]+)[^\n]+= ([\S]+)",s))
 
@@ -25,15 +23,15 @@ def rand(lo, hi, mseed=None):
     Seed = 1 if mseed else (16807 * Seed) % 2147483647
     return lo + (hi-lo) * Seed / 2147483647
 
-def rnd(n, nPlaces=3    ):
+def rnd(n, nPlaces=3):
     mult = 10**nPlaces 
     return math.floor(n * mult + 0.5) / mult
 
 def cosine(a, b, c):
-    x1 = (a**2 + c**2 - b**2) / (2**c)
-    x2 = max(0, min(1, x1))
-    y  = (a**2 - x2**2)**0.5
-    return x2, y
+    den=1 if c==0 else 2*c
+    x1 = (a**2 + c**2 - b**2) / den
+
+    return x1
 
 
 #Strings
@@ -54,45 +52,32 @@ def coerce(s):
         return False
     elif s.isdigit():
         return int(s)
-    elif '.' in s:
-        if s.replace('.','').isdigit():
-            return float(s)
-        else:
-            return s
+    elif '.' in s and s.replace('.','').isdigit():
+        return float(s)
     else:
         return s
 
 def csv(sFilename, fun):
     sFilename=Path(sFilename)
-    t=[]
-    f=open(sFilename.absolute(),'r')
-    lines=f.readlines()
-    for line in lines:
-        t=[]
-        for s in re.findall("([^,]+)", line):
-            t.append(coerce(s))
-        fun(t)
-
+    if sFilename.exists() and sFilename.suffix == '.csv':
+        t = []
+        with open(sFilename.absolute(), 'r', encoding='utf-8') as file:
+            for _, line in enumerate(file):
+                row = list(map(coerce, line.strip().split(',')))
+                t.append(row)
+                fun(row)
+    else:
+        print("File path does not exist OR File not csv, given path: ", sFilename.absolute())
+        return
 
 #Lists
-def map(t, fun):
-    u={}
-    for v in t:
-        k=fun(v)
-        if k:
-            u[k]=v
-        else:
-            u[1+len(u)]=v
-    return u
 
 def kap(t, fun):
-    u={}
-    for k,v in enumerate(t):
-        v,k=fun(k,v)
-        if k:
-            u[k]=v
-        else:
-            u[1+len(u)]=v
+    u = {}
+    for v in t:
+        k = t.index(v)
+        v, k = fun(k,v) 
+        u[k or len(u)] = v
     return u
 
 def kapd(t, fun):
@@ -107,23 +92,25 @@ def any(t):
 
 def many(t,n):
    u=[]
-   for i in range(1,n+1):
+   for _ in range(1,n+1):
     u.append(any(t))
    return u
 
 def show(node, what, cols, nPlaces, lvl =0):
     if node:
-        print('| ' * lvl + str(len(node['data'].rows)) + '  ', end = '')
-        if not node.get('left') or lvl==0:
-            print(node['data'].stats("mid",node['data'].cols.y,nPlaces))
+        print('|..' * lvl, end = '')
+        if not node.get('left'):
+            print(node['data'].rows[-1].cells[-1])
         else:
-            print('')
+            print(int(rnd(100*node['c'], 0)))
         show(node.get('left'), what,cols, nPlaces, lvl+1)
         show(node.get('right'), what,cols,nPlaces, lvl+1)
 
+def deepcopy(t):
+    return copy.deepcopy(t)
 
 def merge(col1,col2):
-  new = copy.deepcopy(col1)
+  new = deepcopy(col1)
   if isinstance(col1, Sym):
       for n in col2.has:
         new.add(n)
@@ -240,8 +227,8 @@ def prune(rule, maxSize):
     for txt, ranges in rule.items():
         n=n+1
         if len(ranges)== maxSize[txt]:
-            n=n-1
-            rule['txt']=None
+            n=n+1
+            rule[txt]=None
     if n>0:
         return rule
 

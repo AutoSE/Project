@@ -103,12 +103,9 @@ def dist():
 
 def half():
     data=d.Data(c.the['file'])
-    left,right,A,B,mid,_ = data.half() 
+    left,right,A,B,g,_ = data.half() 
     print(len(left),len(right))
     l,r = data.clone(left), data.clone(right)
-    print(A.cells,_)
-    print(mid.cells) 
-    print(B.cells)
     print("l",l.stats('mid', l.cols.y, 2))
     print("r",r.stats('mid', r.cols.y, 2))
 
@@ -171,8 +168,6 @@ def all():
     egs['data']=data()
     print('clone')
     egs['clone']=clone()
-    print('cliffsDelta')
-    egs['cliffsDelta']=cliffsDelta()
     print('dist')
     egs['dist']=dist()
     print('half')

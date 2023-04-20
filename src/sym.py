@@ -34,6 +34,7 @@ class Sym:
             return 1
         elif s1 == s2:
             return 0
-        else: return 1
+        else: 
+            return 1
 
 
