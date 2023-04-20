@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 import cli as c
 from sym import Sym
+from num import Num
+import random
+
 Seed = 937162211
 
 def settings(s):
@@ -241,3 +244,57 @@ def prune(rule, maxSize):
             rule['txt']=None
     if n>0:
         return rule
+
+def samples(t, n=None):
+    u=[]
+    for i in range(1, (n or len(t))+1):
+        u.append(t[random.randint(0, len(t)-1)])
+    return u
+
+def gaussian(mu, sd):
+    mu, sd = mu or 0, sd or 1
+    return mu + sd * math.sqrt(-2*math.log(random.random()))*math.cos(2*math.pi*random.random())
+
+def cliffsDelta(ns1,ns2):
+    if len(ns1) > 128:
+        ns1 = samples(ns1,128)
+    if len(ns2) > 128:
+        ns2 = samples(ns2,128)
+    n,gt,lt = 0,0,0
+    for x in ns1:
+        for y in ns2:
+            n = n + 1
+            if x > y:
+                gt = gt + 1
+            if x < y:
+                lt = lt + 1
+    return abs(lt - gt)/n <= float(c.the['cliffs'])
+
+def delta(i,other):
+    e,y,z = 1E-32, i, other
+    return abs(y.mu-z.mu)/((e+y.sd**2/y.n+z.sd**2/z.n)**0.5)
+
+def bootstrap(y0,z0):
+    x,y,z,yhat,zhat = Num(), Num(), Num(),[],[]
+    for y1 in y0:
+        x.add(y1)
+        y.add(y1)
+    for z1 in z0:
+        x.add(z1)
+        z.add(z1)
+    xmu,ymu,zmu = x.mu, y.mu, z.mu
+    for y1 in y0:
+        yhat.append(y1-ymu+xmu)
+    for z1 in z0:
+        zhat.append(z1-zmu+xmu)
+    tobs = delta(y,z)
+    n=0
+    for _ in range(1,c.the['bootstrap']+1):
+        ypass,zpass=Num(),Num()
+        for y in samples(yhat):
+            ypass.add(y)
+        for z in samples(yhat):
+            zpass.add(z)
+        if delta(ypass,zpass)>tobs:
+            n=n+1
+    return (n/float(c.the['bootstrap'])) >= float(c.the['conf'])
