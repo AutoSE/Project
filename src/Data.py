@@ -8,7 +8,9 @@ import math
 import numpy as np
 from operator import itemgetter
 from functools import cmp_to_key
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering,SpectralClustering
+
+
 class Data:
     def __init__(self, src):
         self.rows=[]
@@ -108,7 +110,7 @@ class Data:
         if not rows:
             rows = self.rows
         row_set = np.array([r.cells for r in rows])
-        agg_clust = AgglomerativeClustering(n_clusters=2, metric='euclidean', linkage='ward')
+        agg_clust = AgglomerativeClustering(n_clusters=2,metric='euclidean',linkage='ward')
         agg_clust.fit(row_set)
 
         for key, value in enumerate(agg_clust.labels_):
@@ -117,6 +119,26 @@ class Data:
             else:
                 right.append(rows[key])
         return left, right, random.choices(left, k=10), random.choices(right, k=10), 1
+    
+
+    def spectral_clustering(self, rows=None):
+        left = []
+        right = []
+
+        if not rows:
+            rows = self.rows
+        row_set = np.array([r.cells for r in rows])
+
+        sc = SpectralClustering(n_clusters=2,affinity='rbf').fit(row_set)
+
+        for key, value in enumerate(sc.labels_):
+            if value == 0:
+                left.append(rows[key])
+            else:
+                right.append(rows[key])
+        return left, right, random.choices(left, k=10), random.choices(right, k=10), 1
+    
+
 
     def cluster(self, rows = None, min=None, cols=None, above=None):
         rows = rows or self.rows
@@ -128,6 +150,10 @@ class Data:
             node['left'] = self.cluster(left, min, cols, node['A'])
             node['right'] = self.cluster(right, min, cols, node['B'])
         return node
+
+
+
+
 
     def sway(self, rows=None, min=None, cols=None, above=None):
         data = self
@@ -151,6 +177,23 @@ class Data:
                 return rows, u.many(worse, int(g.the['rest'])*len(rows)),evals0
             else:
                 l,r,A,B,evals = self.agglomerative_clustering(rows)
+                if self.better(B,A):
+                    l,r,A,B = r,l,B,A
+                for row in r:
+                    worse.append(row)
+                return worker(l,worse,evals+evals0,A)
+        best, rest, evals = worker(data.rows,[],0)
+        return self.clone(best), self.clone(rest), evals
+    
+
+
+    def sway2(self, rows=None, min=None, cols=None, above=None):
+        data = self
+        def worker(rows, worse, evals0, above = None):
+            if len(rows) <= len(data.rows)**float(g.the['min']): 
+                return rows, u.many(worse, int(g.the['rest'])*len(rows)),evals0
+            else:
+                l,r,A,B,evals = self.spectral_clustering(rows)
                 if self.better(B,A):
                     l,r,A,B = r,l,B,A
                 for row in r:
