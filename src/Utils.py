@@ -241,3 +241,71 @@ def prune(rule, maxSize):
             rule['txt']=None
     if n>0:
         return rule
+    
+def scottKnot(rxs):
+    def merges(i,j):
+        out=RX([],rxs[i]['name'])
+        for k in range(i, j+1):
+            out=merge(out, rxs[j])
+        return out
+    def same(lo, cut, hi):
+        l = merges(lo, cut)
+        r = merges(cut+1, hi)
+        cliffsDelta(l['has'], r['has']) and bootstrap(l['has'], r['has'])
+
+    def recurse(lo, hi, rank):
+        b4=merges(lo, hi)
+        best=0
+        cut=None
+        for j in range(lo, hi+1):
+            if j<hi:
+                l=merges(lo, j)
+                r=merges(j+1, hi)
+                now=(l['n']*(mid(l)-mid(b4))**2 + r['n']*(mid(r)-mid(b4))**2) / (l['n']+r['n']) 
+                if now>best:
+                    if abs(mid(l)-mid(r))>=cohen:
+                        cut, best= j ,now
+        if cut is not None and not same(lo,cut,hi):
+            rank = recurse(lo, cut, rank) + 1
+            rank = recurse(cut+1, hi, rank) 
+        else:
+            for i in range(lo,hi+1):
+                rxs[i]['rank'] = rank
+        return rank
+    for i,x in enumerate(rxs):
+        for j,y in enumerate(rxs):
+            if mid(x) < mid(y):
+                rxs[j],rxs[i]=rxs[i],rxs[j]
+    cohen = div(merges(0,len(rxs)-1)) * float(w.the['cohen'])
+    recurse(0, len(rxs)-1, 1)
+    return rxs
+
+def tiles(rxs):
+    huge=float('-inf')
+    lo, hi= float('inf'), float('-inf')
+    for rx in rxs:
+        lo, hi= min(lo, rx['has'][0]), max(hi, rx['has'][len(rx['has'])-1])
+    for rx in rxs:
+        t, u= rx['has'],[]
+        def of(x,most):
+            return int(max(1, min(most,x)))
+        def at(x):
+            return t[of(len(t)*x//1, len(t))]
+        def pos(x):
+            wid=int(w.the['width'])
+            return math.floor(of(wid * (x - lo) / (hi - lo + 1E-32) // 1, wid))
+        for i in range(0, int(w.the['width'])+1):
+            u.append(" ")
+        a,b,c,d,e=at(0.1),at(0.3),at(0.5),at(0.7),at(0.9)
+        A,B,C,D,E=pos(a), pos(b), pos(c), pos(d), pos(e)
+        for i in range(A,B+1):
+            u[i]="-"
+        for i in range(D,E+1):
+            u[i]="-"
+        u[int(w.the['width'])//2]="|" 
+        u[C]="*"
+        x=[]
+        for i in [a,b,c,d,e]:
+            x.append(w.the['Fmt'].format(i))
+        rx['show'] = ''.join(u) + str(x)
+    return rxs
