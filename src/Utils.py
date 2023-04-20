@@ -4,6 +4,9 @@ import math
 import copy
 import json
 from pathlib import Path
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
 import cli as w
 from sym import Sym
 Seed = 937162211
@@ -179,6 +182,30 @@ def showTree(tree, what, cols, nPlaces, lvl = 0):
         print('')
     showTree(tree.get('left'), what,cols, nPlaces, lvl+1)
     showTree(tree.get('right'), what,cols,nPlaces, lvl+1)
+
+def preprocess_data(file, data):
+    df = pd.read_csv(file)
+    df = impute_missing_values(df)
+    label_encoding(df)
+    file = file.replace('.csv', '_preprocessed.csv')
+    df.to_csv(file, index=False)
+    return data(file)
+    
+def impute_missing_values(df):
+    for i in df.columns[df.isnull().any(axis=0)]:
+        df[i].fillna(df[i].mean(),inplace=True)
+    for col in df.columns[df.eq('?').any()]:
+        df[col] =df[col].replace('?', np.nan)
+        df[col] = df[col].astype(float)
+        df[col] = df[col].fillna(df[col].mean())
+    return df
+
+def label_encoding(df):
+    syms = [col for col in df.columns if col.strip()[0].islower() and df[col].dtypes == 'O']
+    le = LabelEncoder()
+    for sym in syms:
+        col = le.fit_transform(df[sym])
+        df[sym] = col.copy()
 
 def bins(cols,rowss):
     out = []

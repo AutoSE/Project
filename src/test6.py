@@ -151,6 +151,20 @@ def xpln():
         top = data.clone(top)
         print("sort with",len(data.rows),"evals",top.stats('mid', top.cols.y, 2),top.stats('div', top.cols.y, 2))
 
+def sway1():
+    data = d.Data(c.the['file'])
+    data2 = u.preprocess_data(c.the['file'], d.Data)
+
+    best, rest, _ = data2.sway1()
+    print("\nall ", data.stats('mid', data.cols.y, 2))
+    print("    ", data.stats('div', data.cols.y, 2))
+    print("\nbest",best.stats('mid', best.cols.y, 2))
+    print("    ", best.stats('div', best.cols.y, 2))
+    print("\nrest", rest.stats('mid', rest.cols.y, 2))
+    print("    ", rest.stats('div', rest.cols.y, 2))
+
+
+
 def all():
     print('the')
     egs['the']=the()
@@ -176,6 +190,8 @@ def all():
     egs['tree']=tree()
     print('sway')
     egs['sway']=sway()
+    print('sway1')
+    egs['sway1']=sway1()
     print('bins')
     egs['bins']=bins()
     print('xpln')
