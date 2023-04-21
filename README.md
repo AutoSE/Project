@@ -5,7 +5,7 @@
 
 This repository contains the final project of CSC 591 021 Group 25.
 
-FOR THE REPORT: PLEASE VISIT DOCS FOLDER
+FOR THE REPORT: PLEASE VISIT DOCS FOLDER or CLICK [HERE](https://github.com/AutoSE/Project/blob/main/docs/Report_Group25.pdf)
 
 ### Documentation
 Click [here](https://autose.github.io/Homework/) for a detailed documentation of this project.
